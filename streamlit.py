@@ -8,7 +8,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
-# dhsdadhu
+
 # Menambahkan judul aplikasi
 st.title('Aplikasi Algoritma Machine Learning')
 
