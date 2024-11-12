@@ -46,45 +46,70 @@ if uploaded_file is not None:
         st.write('Preview Dataset:')
 
         # Menampilkan dataset dengan scroll
-        st.dataframe(df, height=300)  # Adjust height as needed
+        st.dataframe(df, height=300)
         st.write(f'Jumlah Baris: {df.shape[0]}')
         st.write(f'Jumlah Kolom: {df.shape[1]}')
 
         # Menampilkan dropdown untuk memilih variabel fitur dan target
         columns = df.columns.tolist()
         target = st.selectbox('Pilih Kolom Target', options=columns)
-        features = st.multiselect('Pilih Kolom Fitur', options=[
-                                  col for col in columns if col != target])
+        features = st.multiselect('Pilih Kolom Fitur', options=[col for col in columns if col != target])
 
         # Pembersihan dan Transformasi Data
         st.subheader('Pembersihan dan Transformasi Data')
 
         # Menangani nilai hilang
         if st.checkbox('Hapus Baris dengan Nilai Hilang'):
+            missing_count_before = df.isnull().sum().sum()
             df = df.dropna()
+            missing_count_after = df.isnull().sum().sum()
+            st.write(f'Jumlah nilai hilang yang dihapus: {missing_count_before - missing_count_after}')
+
         if st.checkbox('Isi Nilai Hilang dengan Rata-Rata'):
-            df = df.fillna(df.mean())
+            # Tampilkan informasi nilai hilang sebelum pengisian
+            missing_before = df.isnull().sum()
+            if missing_before.sum() > 0:
+                st.write("Jumlah nilai hilang per kolom sebelum pengisian:")
+                st.write(missing_before[missing_before > 0])
+
+                # Pisahkan kolom numerik dan kategorikal
+                numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
+                categorical_columns = df.select_dtypes(include=['object']).columns
+
+                # Isi nilai hilang untuk kolom numerik dengan mean
+                if len(numeric_columns) > 0:
+                    df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
+                    st.write("Kolom numerik diisi dengan nilai rata-rata")
+
+                # Isi nilai hilang untuk kolom kategorikal dengan mode (nilai yang paling sering muncul)
+                if len(categorical_columns) > 0:
+                    for col in categorical_columns:
+                        df[col] = df[col].fillna(df[col].mode()[0])
+                    st.write("Kolom kategorikal diisi dengan nilai yang paling sering muncul")
+
+                # Tampilkan informasi nilai hilang setelah pengisian
+                missing_after = df.isnull().sum()
+                if missing_after.sum() > 0:
+                    st.write("Jumlah nilai hilang per kolom setelah pengisian:")
+                    st.write(missing_after[missing_after > 0])
+                else:
+                    st.write("Semua nilai hilang telah diisi!")
 
         # Encoding Kategori
-        categorical_cols = df.select_dtypes(
-            include=['object']).columns.tolist()
-        encode_cols = st.multiselect(
-            'Pilih Kolom untuk Encoding', options=categorical_cols)
+        categorical_cols = df.select_dtypes(include=['object']).columns.tolist()
+        encode_cols = st.multiselect('Pilih Kolom untuk Encoding', options=categorical_cols)
         if encode_cols:
             le = LabelEncoder()
             for col in encode_cols:
                 df[col] = le.fit_transform(df[col])
 
         st.write('Dataset Setelah Pembersihan dan Transformasi:')
-
-        # Menampilkan dataset setelah pembersihan dengan scroll
-        st.dataframe(df, height=300)  # Adjust height as needed
+        st.dataframe(df, height=300)
         st.write(f'Jumlah Baris: {df.shape[0]}')
         st.write(f'Jumlah Kolom: {df.shape[1]}')
 
         # Memilih proporsi data latih dan uji
-        test_size = st.slider('Pilih Proporsi Data Uji (%)',
-                              min_value=10, max_value=90, value=20)
+        test_size = st.slider('Pilih Proporsi Data Uji (%)', min_value=10, max_value=90, value=20)
 
         if st.button('Latih Model'):
             if target and features:
@@ -92,8 +117,7 @@ if uploaded_file is not None:
                 y = df[target]
 
                 # Membagi data menjadi data latih dan data uji
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=test_size/100, random_state=42)
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size/100, random_state=42)
 
                 # Standarisasi fitur
                 scaler = StandardScaler()
@@ -114,8 +138,7 @@ if uploaded_file is not None:
                 # Memprediksi hasil
                 y_pred = model.predict(X_test)
                 accuracy = accuracy_score(y_test, y_pred)
-                report = classification_report(
-                    y_test, y_pred, output_dict=True)
+                report = classification_report(y_test, y_pred, output_dict=True)
                 conf_matrix = confusion_matrix(y_test, y_pred)
 
                 st.write(f'Akurasi Model: {accuracy:.2f}')
@@ -124,8 +147,7 @@ if uploaded_file is not None:
 
                 st.subheader('Confusion Matrix')
                 fig, ax = plt.subplots(figsize=(10, 7))
-                sns.heatmap(conf_matrix, annot=True,
-                            fmt='d', cmap='Blues', ax=ax)
+                sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', ax=ax)
                 plt.xlabel('Predicted Labels')
                 plt.ylabel('True Labels')
                 st.pyplot(fig)
