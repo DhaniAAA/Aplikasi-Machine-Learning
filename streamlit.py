@@ -8,9 +8,10 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
+import io
 
 # Menambahkan judul aplikasi
-st.title('Aplikasi Algoritma Machine Learning')
+st.title('Aplikasi Klasifikasi Kualitas Susu Sapi dengan Machine Learning')
 
 # Menambahkan sidebar
 st.sidebar.header('Pilih Algoritma')
@@ -164,3 +165,14 @@ if uploaded_file is not None:
         st.error('File kosong atau format tidak valid.')
     except Exception as e:
         st.error(f'Error: {e}')
+
+# Add after st.dataframe(df, height=300) line
+
+if st.checkbox('Show Dataset Description'):
+    st.subheader('Dataset Description')
+    st.write(df.describe())
+
+    # Display missing values information
+    st.write('Missing Values:')
+    missing_values = df.isnull().sum()
+    st.write(missing_values[missing_values > 0])
