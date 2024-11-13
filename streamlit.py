@@ -156,7 +156,7 @@ if uploaded_file is not None:
                 # Menampilkan beberapa contoh prediksi
                 st.subheader('Contoh Prediksi')
                 examples = pd.DataFrame({'True': y_test, 'Predicted': y_pred})
-                st.write(examples.head())
+                st.write(examples.head(10))
 
             else:
                 st.error('Pilih kolom target dan fitur dengan benar.')
